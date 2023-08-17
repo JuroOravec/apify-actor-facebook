@@ -58,6 +58,20 @@ export const serialAsyncMap = async <T, R>(
   return results;
 };
 
+export const serialAsyncFilter = async <T>(
+  inputArr: T[],
+  fn: (item: T, index: number) => MaybePromise<any>
+) => {
+  const results = await inputArr.reduce(async (aggResultPromise, input, index) => {
+    const agg = await aggResultPromise;
+    const result = await fn(input, index);
+    if (result) agg.push(input);
+    return agg;
+  }, Promise.resolve([] as T[]));
+
+  return results;
+};
+
 export const serialAsyncFind = async <T>(
   inputArr: T[],
   fn: (item: T, index: number) => MaybePromise<any>
@@ -79,7 +93,11 @@ export const deferredPromise = <TVal>() => {
     resolve = (val: TVal) => res(val);
     reject = (reason?: unknown) => rej(reason);
   });
-  return { resolve: resolve!, reject: reject!, promise };
+  return {
+    get resolve() { return resolve; },
+    get reject() { return reject; },
+    promise,
+  }; // prettier-ignore
 };
 
 export const awaitValues = async <T extends Record<string, Promise<any>>>(obj: T) => {

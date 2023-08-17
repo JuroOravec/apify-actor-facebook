@@ -16,14 +16,14 @@ export const resolveUrlPath = (urlBase: string, urlPath: string) => {
 };
 
 /** Sort URL's query params */
-export const sortUrl = (url) => {
+export const sortUrl = (url: string) => {
   const urlObj = new URL(url);
 
   urlObj.searchParams.sort();
   return urlObj.href;
 };
 
-export const equalUrls = (url1, url2) => {
+export const equalUrls = (url1: string, url2: string) => {
   const url1Sorted = sortUrl(url1);
   const url2Sorted = sortUrl(url2);
 

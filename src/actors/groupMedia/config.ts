@@ -61,7 +61,7 @@ const customActorInput = {
 } satisfies Record<keyof FbGroupMediaCustomActorInput, Field>;
 
 // Customize the default options
-crawlerInput.requestHandlerTimeoutSecs.prefill = 60 * 60 * 1; // 1 HR
+crawlerInput.requestHandlerTimeoutSecs.prefill = 60 * 60 * 24; // 24 HR
 crawlerInput.maxRequestRetries.default = 5;
 crawlerInput.maxRequestRetries.prefill = 5;
 crawlerInput.maxConcurrency.default = 5;
