@@ -13,7 +13,7 @@ import {
   ProxyActorInput,
   StartUrlsActorInput,
   MetamorphActorInput,
-  crawlerInput,
+  crawlerInput as _crawlerInput,
   loggingInput,
   outputInput,
   privacyInput,
@@ -37,7 +37,7 @@ export type FbGroupMediaCustomActorInput = {
 /** Shape of the data passed to the actor from Apify */
 export interface FbGroupMediaActorInput
   // Include the common fields in input
-  extends CrawlerConfigActorInput,
+  extends Omit<CrawlerConfigActorInput, 'ignoreSslErrors'>,
     StartUrlsActorInput,
     LoggingActorInput,
     ProxyActorInput,
@@ -61,6 +61,10 @@ const customActorInput = {
 } satisfies Record<keyof FbGroupMediaCustomActorInput, Field>;
 
 // Customize the default options
+
+// Not applicable to Playwright
+const { ignoreSslErrors, ...crawlerInput } = _crawlerInput;
+
 crawlerInput.requestHandlerTimeoutSecs.prefill = 60 * 60 * 24; // 24 HR
 crawlerInput.maxRequestRetries.default = 5;
 crawlerInput.maxRequestRetries.prefill = 5;
