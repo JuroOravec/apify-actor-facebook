@@ -55,7 +55,6 @@
     "coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@types/jimp": "^0.2.28",
     "@types/lodash": "^4.14.192",
     "@types/node": "^18.15.11",
     "@types/node-fetch": "^2.6.3",
