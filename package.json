@@ -1,0 +1,96 @@
+{
+  "name": "apify-actor-facebook",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Apify Actors that scrape Facebook website",
+  "author": "Juro Oravec <juraj.oravec.josefson@gmail.com>",
+  "homepage": "https://github.com/jurooravec/apify-actor-facebook#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jurooravec/apify-actor-facebook.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jurooravec/apify-actor-facebook/issues"
+  },
+  "license": "MIT",
+  "keywords": [
+    "apify",
+    "actor",
+    "facebook",
+    "scraper"
+  ],
+  "files": [
+    "dist",
+    "actors"
+  ],
+  "exports": {
+    "./groupMedia": "./dist/cjs/actors/groupMedia/index.js"
+  },
+  "types": "dist/cjs/index.d.js",
+  "bin": "dist/cjs/cli/index.js",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "start": "npm run start:dev",
+    "start:prod": "node dist/cjs/cli/index.js start-prod",
+    "start:prod__example": "echo 'npm run start:prod -- -- groupMedia -h'",
+    "start:dev": "ts-node ./src/cli start-dev",
+    "start:dev__example": "echo 'npm run start:dev -- -- groupMedia -h'",
+    "build": "run-s build:cjs \"gen:all * \"",
+    "build:all": "run-s build:cjs build:esm build:umd \"gen:all * \"",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:umd": "webpack",
+    "lint": "eslint ./src --ext .ts",
+    "lint:fix": "eslint ./src --ext .ts --fix",
+    "migrate": "node dist/cjs/cli/index.js migrate",
+    "unmigrate": "node dist/cjs/cli/index.js unmigrate",
+    "gen:actor": "node dist/cjs/cli/index.js gen-actor",
+    "gen:actorspec": "node dist/cjs/cli/index.js gen-actorspec",
+    "gen:readme": "node dist/cjs/cli/index.js gen-readme",
+    "gen:all": "run-s \"gen:actor {1}\" \"gen:actorspec {1}\" \"gen:readme {1}\" --",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@types/jimp": "^0.2.28",
+    "@types/lodash": "^4.14.192",
+    "@types/node": "^18.15.11",
+    "@types/node-fetch": "^2.6.3",
+    "@types/pkginfo": "^0.4.0",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "commander": "^11.0.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-plugin-prettier": "^3.4.1",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.5.1",
+    "ts-loader": "^8.3.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4",
+    "vite": "^4.2.1",
+    "vitest": "^0.30.1",
+    "webpack": "^4.46.0",
+    "webpack-cli": "^3.3.7"
+  },
+  "dependencies": {
+    "@sentry/node": "^7.50.0",
+    "actor-spec": "^0.4.1",
+    "apify": "^3.1.4",
+    "apify-actor-config": "^1.0.3",
+    "apify-actor-utils": "^0.18.9",
+    "apify-client": "^2.7.1",
+    "cheerio": "^1.0.0-rc.12",
+    "crawlee": "^3.3.1",
+    "date-fns": "^2.30.0",
+    "got": "^12.6.0",
+    "jimp": "^0.22.10",
+    "joi": "^17.9.1",
+    "lodash": "^4.17.21",
+    "node-fetch": "^2.6.6",
+    "pkginfo": "^0.4.1",
+    "playwright": "^1.37.0"
+  }
+}
