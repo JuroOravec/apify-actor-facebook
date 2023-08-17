@@ -38,6 +38,7 @@
     "start:dev": "ts-node ./src/cli start-dev",
     "start:dev__example": "echo 'npm run start:dev -- -- groupMedia -h'",
     "build": "run-s build:cjs \"gen:all * \"",
+    "build:ci": "run-s build:cjs",
     "build:all": "run-s build:cjs build:esm build:umd \"gen:all * \"",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json",
