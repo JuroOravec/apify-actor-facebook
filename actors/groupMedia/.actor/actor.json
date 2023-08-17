@@ -243,12 +243,6 @@
         "description": "Allows to keep the crawler alive even if the RequestQueue gets empty. With keepAlive: true the crawler will keep running, waiting for more requests to come.",
         "nullable": true
       },
-      "ignoreSslErrors": {
-        "title": "ignoreSslErrors",
-        "type": "boolean",
-        "description": "If set to true, SSL certificate errors will be ignored.",
-        "nullable": true
-      },
       "additionalMimeTypes": {
         "title": "additionalMimeTypes",
         "type": "array",
