@@ -1,0 +1,366 @@
+{
+  "actorSpecification": 1,
+  "name": "facebook-group-media-scraper",
+  "title": "Facebook Group Media Scraper",
+  "description": "Extract Photos, Videos and Albums from Public Groups - likes, comments, views, shares, URLs, authors, and more.",
+  "version": "1.0",
+  "dockerfile": "../Dockerfile",
+  "dockerContextDir": "../../..",
+  "input": {
+    "schemaVersion": 1,
+    "title": "Facebook Group Media Scraper",
+    "description": "Configure the Facebook Group Media Scraper.",
+    "type": "object",
+    "properties": {
+      "startUrls": {
+        "title": "Start URLs",
+        "type": "array",
+        "description": "List of URLs to scrape.",
+        "editor": "requestListSources",
+        "sectionCaption": "Starting URLs"
+      },
+      "startUrlsFromDataset": {
+        "title": "Start URLs from Dataset",
+        "type": "string",
+        "editor": "textfield",
+        "description": "Import URLs to scrape from an existing Apify Dataset.<br/><br/>\n    Write the dataset and the field to import in the format `{datasetID}#{field}`.<br/><br/>\n    Example: `datasetid123#url` will take URLs from dataset `datasetid123` from field `url`.",
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]*#.+$",
+        "example": "datasetid123#url",
+        "nullable": true
+      },
+      "startUrlsFromFunction": {
+        "title": "Start URLs from custom function",
+        "type": "string",
+        "description": "Import or generate URLs to scrape using a custom function.<br/><br/>\n    The function has access to Apify's Actor class, and actor's input and a shared state in the first argument.<br/><br/>\n    `\n    // Example: Create and load URLs from an Apify Dataset by combining multiple fields\n    async ({ Actor, input, state, itemCacheKey }) => {\n      const dataset = await Actor.openDataset(datasetNameOrId);\n      const data = await dataset.getData();\n      const urls = data.items.map((item) => `https://example.com/u/${item.userId}/list/${item.listId}`);\n      return urls;\n    }\n    `\n    ",
+        "editor": "javascript",
+        "example": "\n    // Example: Create and load URLs from an Apify Dataset by combining multiple fields\n    async ({ Actor, input, state, itemCacheKey }) => {\n      const dataset = await Actor.openDataset(datasetNameOrId);\n      const data = await dataset.getData();\n      const urls = data.items.map((item) => `https://example.com/u/${item.userId}/list/${item.listId}`);\n      return urls;\n    }",
+        "nullable": true
+      },
+      "proxy": {
+        "title": "Proxy configuration",
+        "type": "object",
+        "description": "Select proxies to be used by your crawler.",
+        "editor": "proxy",
+        "sectionCaption": "Proxy",
+        "sectionDescription": "Configure the proxy"
+      },
+      "includePersonalData": {
+        "title": "Include personal data",
+        "type": "boolean",
+        "description": "By default, fields that are potential personal data are censored. Toggle this option on to get the un-uncensored values.<br/><br/><strong>WARNING:</strong> Turn this on ONLY if you have consent, legal basis for using the data, or at your own risk. <a href=\"https://gdpr.eu/eu-gdpr-personal-data/\">Learn more</a>",
+        "default": false,
+        "example": false,
+        "nullable": true,
+        "sectionCaption": "Privacy & Data governance (GDPR)"
+      },
+      "outputMaxEntries": {
+        "title": "Limit the number of scraped entries",
+        "type": "integer",
+        "description": "If set, only at most this many entries will be scraped.<br/><br/>\n      The count is determined from the Apify Dataset that's used for the Actor run.<br/><br/>\n      This means that if `outputMaxEntries` is set to 50, but the associated Dataset already has 40 items in it, then only 10 new entries will be saved.",
+        "example": 50,
+        "prefill": 50,
+        "minimum": 0,
+        "nullable": true,
+        "sectionCaption": "Output size, transformation & filtering (T in ETL) (Advanced)"
+      },
+      "outputPickFields": {
+        "title": "Pick dataset fields",
+        "type": "array",
+        "description": "Select a subset of fields of an entry that will be pushed to the dataset.<br/><br/>\n    If not set, all fields on an entry will be pushed to the dataset.<br/><br/>\n    This is done before `outputRenameFields`.<br/><br/>\n    Keys can be nested, e.g. `\"someProp.value[0]\"`.\n    Nested path is resolved using <a href=\"https://lodash.com/docs/4.17.15#get\">Lodash.get()</a>.",
+        "editor": "stringList",
+        "example": [
+          "fieldName",
+          "another.nested[0].field"
+        ],
+        "nullable": true
+      },
+      "outputRenameFields": {
+        "title": "Rename dataset fields",
+        "type": "object",
+        "description": "Rename fields (columns) of the output data.<br/><br/>\n    If not set, all fields will have their original names.<br/><br/>\n    This is done after `outputPickFields`.<br/><br/>\n    Keys can be nested, e.g. `\"someProp.value[0]\"`.\n    Nested path is resolved using <a href=\"https://lodash.com/docs/4.17.15#get\">Lodash.get()</a>.",
+        "editor": "json",
+        "example": {
+          "oldFieldName": "newFieldName"
+        },
+        "nullable": true
+      },
+      "outputTransform": {
+        "title": "Transform entries",
+        "type": "string",
+        "description": "Freely transform the output data object using a custom function.<br/><br/>\n    If not set, the data will remain as is.<br/><br/>\n    This is done after `outputPickFields` and `outputRenameFields`.<br/><br/>\n    The function has access to Apify's Actor class, and actor's input and a shared state in the second argument.<br/><br/>\n    `async (entry, { Actor, input, state, itemCacheKey }) => { ... }`\n    ",
+        "editor": "javascript",
+        "example": "async (entry, { Actor, input, state, itemCacheKey }) => { ... }",
+        "nullable": true
+      },
+      "outputTransformBefore": {
+        "title": "Transform entries - Setup",
+        "type": "string",
+        "description": "Use this if you need to run one-time initialization code before `outputTransform`.<br/><br/>\n    The function has access to Apify's Actor class, and actor's input and a shared state in the first argument.<br/><br/>\n    `async ({ Actor, input, state, itemCacheKey }) => { ... }`\n    ",
+        "editor": "javascript",
+        "example": "async ({ Actor, input, state, itemCacheKey }) => { ... }",
+        "nullable": true
+      },
+      "outputTransformAfter": {
+        "title": "Transform entries - Teardown",
+        "type": "string",
+        "description": "Use this if you need to run one-time teardown code after `outputTransform`.<br/><br/>\n    The function has access to Apify's Actor class, and actor's input and a shared state in the first argument.<br/><br/>\n    `async ({ Actor, input, state, itemCacheKey }) => { ... }`\n    ",
+        "editor": "javascript",
+        "example": "async ({ Actor, input, state, itemCacheKey }) => { ... }",
+        "nullable": true
+      },
+      "outputFilter": {
+        "title": "Filter entries",
+        "type": "string",
+        "description": "Decide which scraped entries should be included in the output by using a custom function.<br/><br/>\n    If not set, all scraped entries will be included.<br/><br/>\n    This is done after `outputPickFields`, `outputRenameFields`, and `outputTransform`.<br/><br/>\n    The function has access to Apify's Actor class, and actor's input and a shared state in the second argument.<br/><br/>\n    `async (entry, { Actor, input, state, itemCacheKey }) => boolean`\n    ",
+        "editor": "javascript",
+        "example": "async (entry, { Actor, input, state, itemCacheKey }) => boolean",
+        "nullable": true
+      },
+      "outputFilterBefore": {
+        "title": "Filter entries - Setup",
+        "type": "string",
+        "description": "Use this if you need to run one-time initialization code before `outputFilter`.<br/><br/>\n    The function has access to Apify's Actor class, and actor's input and a shared state in the first argument.<br/><br/>\n    `async (entry, { Actor, input, state, itemCacheKey }) => boolean`\n    ",
+        "editor": "javascript",
+        "example": "async ({ Actor, input, state, itemCacheKey }) => boolean",
+        "nullable": true
+      },
+      "outputFilterAfter": {
+        "title": "Filter entries - Teardown",
+        "type": "string",
+        "description": "Use this if you need to run one-time teardown code after `outputFilter`.<br/><br/>\n    The function has access to Apify's Actor class, and actor's input and a shared state in the first argument.<br/><br/>\n    `async ({ Actor, input, state, itemCacheKey }) => boolean`\n    ",
+        "editor": "javascript",
+        "example": "async ({ Actor, input, state, itemCacheKey }) => boolean",
+        "nullable": true
+      },
+      "outputDatasetIdOrName": {
+        "title": "Dataset ID or name",
+        "type": "string",
+        "description": "By default, data is written to Default dataset.\n    Set this option if you want to write data to non-default dataset.\n    <a href=\"https://docs.apify.com/sdk/python/docs/concepts/storages#opening-named-and-unnamed-storages\">Learn more</a><br/><br/>\n    <strong>NOTE:<strong> Dataset name can only contain letters 'a' through 'z', the digits '0' through '9', and the hyphen ('-') but only in the middle of the string (e.g. 'my-value-1')",
+        "editor": "textfield",
+        "example": "mIJVZsRQrDQf4rUAf",
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]*$",
+        "nullable": true,
+        "sectionCaption": "Output Dataset & Caching (L in ETL) (Advanced)"
+      },
+      "outputCacheStoreIdOrName": {
+        "title": "Cache ID or name",
+        "type": "string",
+        "description": "Set this option if you want to cache scraped entries in <a href=\"https://docs.apify.com/sdk/js/docs/guides/result-storage#key-value-store\">Apify's Key-value store</a>.<br/><br/>\n    This is useful for example when you want to scrape only NEW entries. In such case, you can use the `outputFilter` option to define a custom function to filter out entries already found in the cache.\n    <a href=\"https://docs.apify.com/sdk/python/docs/concepts/storages#working-with-key-value-stores\">Learn more</a><br/><br/>\n    <strong>NOTE:<strong> Cache name can only contain letters 'a' through 'z', the digits '0' through '9', and the hyphen ('-') but only in the middle of the string (e.g. 'my-value-1')",
+        "editor": "textfield",
+        "example": "mIJVZsRQrDQf4rUAf",
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]*$",
+        "nullable": true
+      },
+      "outputCachePrimaryKeys": {
+        "title": "Cache primary keys",
+        "type": "array",
+        "description": "Specify fields that uniquely identify entries (primary keys), so entries can be compared against the cache.<br/><br/>\n    <strong>NOTE:<strong> If not set, the entries are hashed based on all fields",
+        "editor": "stringList",
+        "example": [
+          "name",
+          "city"
+        ],
+        "nullable": true
+      },
+      "outputCacheActionOnResult": {
+        "title": "Cache action on result",
+        "type": "string",
+        "description": "Specify whether scraped results should be added to, removed from, or overwrite the cache.<br/><br/>\n    - <strong>add<strong> - Adds scraped results to the cache<br/><br/>\n    - <strong>remove<strong> - Removes scraped results from the cache<br/><br/>\n    - <strong>set<strong> - First clears all entries from the cache, then adds scraped results to the cache<br/><br/>\n    <strong>NOTE:<strong> No action happens when this field is empty.",
+        "editor": "select",
+        "enum": [
+          "add",
+          "remove",
+          "overwrite"
+        ],
+        "example": "add",
+        "nullable": true
+      },
+      "maxRequestRetries": {
+        "title": "maxRequestRetries",
+        "type": "integer",
+        "description": "Indicates how many times the request is retried if <a href=\"https://crawlee.dev/api/basic-crawler/interface/BasicCrawlerOptions#requestHandler\">BasicCrawlerOptions.requestHandler</a> fails.",
+        "example": 3,
+        "prefill": 5,
+        "minimum": 0,
+        "nullable": true,
+        "sectionCaption": "Crawler configuration (Advanced)",
+        "sectionDescription": "These options are applied directly to the Crawler. In majority of cases you don't need to change these. See https://crawlee.dev/api/basic-crawler/interface/BasicCrawlerOptions",
+        "default": 5
+      },
+      "maxRequestsPerMinute": {
+        "title": "maxRequestsPerMinute",
+        "type": "integer",
+        "description": "The maximum number of requests per minute the crawler should run. We can pass any positive, non-zero integer.",
+        "example": 120,
+        "prefill": 120,
+        "minimum": 1,
+        "nullable": true
+      },
+      "maxRequestsPerCrawl": {
+        "title": "maxRequestsPerCrawl",
+        "type": "integer",
+        "description": "Maximum number of pages that the crawler will open. The crawl will stop when this limit is reached. <br/><br/> <strong>NOTE:</strong> In cases of parallel crawling, the actual number of pages visited might be slightly higher than this value.",
+        "minimum": 1,
+        "nullable": true
+      },
+      "minConcurrency": {
+        "title": "minConcurrency",
+        "type": "integer",
+        "description": "Sets the minimum concurrency (parallelism) for the crawl.<br/><br/><strong>WARNING:</strong> If we set this value too high with respect to the available system memory and CPU, our crawler will run extremely slow or crash. If not sure, it's better to keep the default value and the concurrency will scale up automatically.",
+        "example": 1,
+        "prefill": 1,
+        "minimum": 1,
+        "nullable": true
+      },
+      "maxConcurrency": {
+        "title": "maxConcurrency",
+        "type": "integer",
+        "description": "Sets the maximum concurrency (parallelism) for the crawl.",
+        "minimum": 1,
+        "nullable": true,
+        "default": 5,
+        "prefill": 5
+      },
+      "navigationTimeoutSecs": {
+        "title": "navigationTimeoutSecs",
+        "type": "integer",
+        "description": "Timeout in which the HTTP request to the resource needs to finish, given in seconds.",
+        "minimum": 0,
+        "nullable": true
+      },
+      "requestHandlerTimeoutSecs": {
+        "title": "requestHandlerTimeoutSecs",
+        "type": "integer",
+        "description": "Timeout in which the function passed as <a href=\"https://crawlee.dev/api/basic-crawler/interface/BasicCrawlerOptions#requestHandler\">BasicCrawlerOptions.requestHandler</a> needs to finish, in seconds.",
+        "example": 180,
+        "prefill": 86400,
+        "minimum": 0,
+        "nullable": true
+      },
+      "keepAlive": {
+        "title": "keepAlive",
+        "type": "boolean",
+        "description": "Allows to keep the crawler alive even if the RequestQueue gets empty. With keepAlive: true the crawler will keep running, waiting for more requests to come.",
+        "nullable": true
+      },
+      "ignoreSslErrors": {
+        "title": "ignoreSslErrors",
+        "type": "boolean",
+        "description": "If set to true, SSL certificate errors will be ignored.",
+        "nullable": true
+      },
+      "additionalMimeTypes": {
+        "title": "additionalMimeTypes",
+        "type": "array",
+        "description": "An array of MIME types you want the crawler to load and process. By default, only text/html and application/xhtml+xml MIME types are supported.",
+        "editor": "stringList",
+        "uniqueItems": true,
+        "nullable": true
+      },
+      "suggestResponseEncoding": {
+        "title": "suggestResponseEncoding",
+        "type": "string",
+        "description": "By default this crawler will extract correct encoding from the HTTP response headers. There are some websites which use invalid headers. Those are encoded using the UTF-8 encoding. If those sites actually use a different encoding, the response will be corrupted. You can use suggestResponseEncoding to fall back to a certain encoding, if you know that your target website uses it. To force a certain encoding, disregarding the response headers, use forceResponseEncoding.",
+        "editor": "textfield",
+        "nullable": true
+      },
+      "forceResponseEncoding": {
+        "title": "forceResponseEncoding",
+        "type": "string",
+        "description": "By default this crawler will extract correct encoding from the HTTP response headers. Use forceResponseEncoding to force a certain encoding, disregarding the response headers. To only provide a default for missing encodings, use suggestResponseEncoding.",
+        "editor": "textfield",
+        "nullable": true
+      },
+      "perfBatchSize": {
+        "title": "Batch requests",
+        "type": "integer",
+        "description": "If set, multiple Requests will be handled by a single Actor instance.<br/><br/>\n       Example: If set to 20, then up to 20 requests will be handled in a single \"go\".<br/><br/>\n       <a href=\"https://docs.apify.com/platform/actors/development/performance#batch-jobs-win-over-the-single-jobs\">See Apify documentation</a>.",
+        "example": 20,
+        "minimum": 0,
+        "nullable": true,
+        "sectionCaption": "Performance configuration (Advanced)",
+        "sectionDescription": "Standalone performance options. These are not passed to the Crawler."
+      },
+      "logLevel": {
+        "title": "Log Level",
+        "type": "string",
+        "editor": "select",
+        "description": "Select how detailed should be the logging.",
+        "enum": [
+          "off",
+          "debug",
+          "info",
+          "warn",
+          "error"
+        ],
+        "enumTitles": [
+          "No logging (off)",
+          "Debug and higher priority",
+          "Info and higher priority",
+          "Warning and higher priority",
+          "Error and higher priority"
+        ],
+        "example": "info",
+        "prefill": "info",
+        "default": "info",
+        "nullable": true,
+        "sectionCaption": "Logging & Error handling (Advanced)",
+        "sectionDescription": "Configure how to handle errors or what should be displayed in the log console."
+      },
+      "errorReportingDatasetId": {
+        "title": "Error reporting dataset ID",
+        "type": "string",
+        "editor": "textfield",
+        "description": "Apify dataset ID or name to which errors should be captured.<br/><br/>\n    Default: `'REPORTING'`.<br/><br/>\n    <strong>NOTE:<strong> Dataset name can only contain letters 'a' through 'z', the digits '0' through '9', and the hyphen ('-') but only in the middle of the string (e.g. 'my-value-1')",
+        "example": "REPORTING",
+        "prefill": "REPORTING",
+        "default": "REPORTING",
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]*$",
+        "nullable": true
+      },
+      "errorSendToSentry": {
+        "title": "Send errors to Sentry",
+        "type": "boolean",
+        "editor": "checkbox",
+        "description": "Whether to send actor error reports to <a href=\"https://sentry.io/\">Sentry</a>.<br/><br/>\n    This info is used by the author of this actor to identify broken integrations,\n    and track down and fix issues.",
+        "example": true,
+        "default": true,
+        "nullable": true
+      },
+      "metamorphActorId": {
+        "title": "Metamorph actor ID - metamorph to another actor at the end",
+        "type": "string",
+        "description": "Use this option if you want to run another actor with the same dataset after this actor has finished (AKA metamorph into another actor). <a href=\"https://docs.apify.com/sdk/python/docs/concepts/interacting-with-other-actors#actormetamorph\">Learn more</a> <br/><br/>New actor is identified by its ID, e.g. \"apify/web-scraper\".",
+        "editor": "textfield",
+        "example": "apify/web-scraper",
+        "nullable": true,
+        "sectionCaption": "Integrations (Metamorphing) (Advanced)"
+      },
+      "metamorphActorBuild": {
+        "title": "Metamorph actor build",
+        "type": "string",
+        "description": "Tag or number of the target actor build to metamorph into (e.g. 'beta' or '1.2.345')",
+        "editor": "textfield",
+        "example": "1.2.345",
+        "nullable": true
+      },
+      "metamorphActorInput": {
+        "title": "Metamorph actor input",
+        "type": "object",
+        "description": "Input object passed to the follow-up (metamorph) actor. <a href=\"https://docs.apify.com/sdk/python/docs/concepts/interacting-with-other-actors#actormetamorph\">Learn more</a>",
+        "editor": "json",
+        "example": {
+          "uploadDatasetToGDrive": true
+        },
+        "nullable": true
+      }
+    }
+  },
+  "storages": {
+    "dataset": {
+      "actorSpecification": 1,
+      "fields": {},
+      "views": {}
+    }
+  }
+}

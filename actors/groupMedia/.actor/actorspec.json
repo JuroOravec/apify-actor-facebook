@@ -1,0 +1,40 @@
+{
+  "actorspecVersion": 1,
+  "actor": {
+    "title": "Facebook Group Media Scraper",
+    "publicUrl": "https://apify.com/jurooravec/facebook-group-media-scraper",
+    "shortDesc": "Extract Photos, Videos and Albums from Public Groups - likes, comments, views, shares, URLs, authors, and more.",
+    "datasetOverviewImgUrl": null
+  },
+  "platform": {
+    "name": "apify",
+    "url": "https://apify.com",
+    "authorId": "jurooravec",
+    "authorProfileUrl": "https://apify.com/jurooravec",
+    "actorId": "facebook-group-media-scraper",
+    "socials": {
+      "discord": "https://discord.com/channels/801163717915574323"
+    }
+  },
+  "authors": [
+    {
+      "name": "Juro Oravec",
+      "email": "juraj.oravec.josefson@gmail.com",
+      "authorUrl": "https://jurora.vc"
+    }
+  ],
+  "websites": [
+    {
+      "name": "Facebook",
+      "url": "https://www.facebook.com/"
+    }
+  ],
+  "pricing": {
+    "pricingType": "per results",
+    "value": 5,
+    "currency": "eur",
+    "period": 1000,
+    "periodUnit": "results"
+  },
+  "datasets": []
+}
