@@ -548,7 +548,7 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
         .locator(tabSelector)
         .evaluateAll((els) => els.map((el) => (el as HTMLAnchorElement).href));
 
-      ctx.log.debug(`Enqueuing ${tabLinks.length} tab links to default request queue`);
+      ctx.log.info(`Enqueuing ${tabLinks.length} tab links to default request queue`);
       await reqQueue.addRequests(tabLinks.map((url) => ({ url })));
     },
 
@@ -592,7 +592,7 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       }
 
       // 3. Scroll down and process new entries when they appear
-      ctx.log.debug(`Starting infinite scroll in "${tab}" tab for FB group (ID "${groupId}")`); // prettier-ignore
+      ctx.log.info(`Starting infinite scroll in "${tab}" tab for FB group (ID "${groupId}")`); // prettier-ignore
 
       let itemsCount = 0;
       await pageLib.infiniteScroll(
@@ -613,7 +613,7 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
           itemsCount += links.length;
 
           // 5. Push new entries to the queue
-          ctx.log.debug(`Enqueuing ${links.length} (total: ${itemsCount}) new links to default request queue`); // prettier-ignore
+          ctx.log.info(`Enqueuing ${links.length} (total: ${itemsCount}) new links to default request queue`); // prettier-ignore
           await reqQueue.addRequests(links.map((url) => ({ url })));
           ctx.log.debug(`Done enqueuing ${links.length} (total: ${itemsCount}) new links to default request queue`); // prettier-ignore
 
@@ -621,7 +621,7 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
         },
         { waitAfterScroll: waitAfterInfiniteScroll }
       );
-      ctx.log.debug(`Finished infinite scroll in "${tab}" tab for FB group (ID "${groupId}")`); // prettier-ignore
+      ctx.log.info(`Finished infinite scroll in "${tab}" tab for FB group (ID "${groupId}")`); // prettier-ignore
     },
 
     // Scrape data from a Photo post
@@ -780,7 +780,6 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       const imagePreview = await makeImageMeta(photoData.imagePreview.url, photoData.imagePreview); // prettier-ignore
       const authorProfileImageThumb = await makeImageMeta(authorProfileImageThumbUrl);
 
-      logger.debug(`011: Pushing entry`);
       const entry = {
         ...photoData,
         url: pageUrl,
@@ -1198,7 +1197,7 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       }
 
       // 5.2. Trigger infinite scroll and parse results as they load
-      ctx.log.debug(`006: Starting infinite scroll for FB album (ID "${albumId}")`);
+      ctx.log.info(`006: Starting infinite scroll for FB album (ID "${albumId}")`);
 
       let itemsCount = 0;
       await pwPage.infiniteScroll(
@@ -1220,7 +1219,7 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
           itemsCount += links.length;
 
           // 5.4. Push new entries to the queue
-          ctx.log.debug(`008: Enqueuing ${links.length} (total: ${itemsCount}) new links from FB album (ID "${albumId}")`); // prettier-ignore
+          ctx.log.info(`008: Enqueuing ${links.length} (total: ${itemsCount}) new links from FB album (ID "${albumId}")`); // prettier-ignore
           await reqQueue.addRequests(links.map((url) => ({ url })));
           ctx.log.debug(`Done enqueuing ${links.length} (total: ${itemsCount}) new links from FB album (ID "${albumId}")`); // prettier-ignore
 
@@ -1228,7 +1227,7 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
         },
         { waitAfterScroll: waitAfterInfiniteScroll }
       );
-      ctx.log.debug(`Finished infinite scroll for FB album (ID "${albumId}")`); // prettier-ignore
+      ctx.log.info(`Finished infinite scroll for FB album (ID "${albumId}")`); // prettier-ignore
 
       // 6. Record the album entry
       const entry = {
