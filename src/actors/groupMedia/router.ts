@@ -637,9 +637,9 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
           itemsCount += links.length;
 
           // 5. Push new entries to the queue
-          ctx.log.info(`Enqueuing ${links.length} (total: ${itemsCount}) new links to default request queue`); // prettier-ignore
+          ctx.log.info(`Enqueuing ${links.length} (total: ${itemsCount}) new links to default request queue from "${tab}" tab for FB group (ID "${groupId}")`); // prettier-ignore
           await reqQueue.addRequests(links.map((url) => ({ url })));
-          ctx.log.debug(`Done enqueuing ${links.length} (total: ${itemsCount}) new links to default request queue`); // prettier-ignore
+          ctx.log.debug(`Done enqueuing ${links.length} (total: ${itemsCount}) new links to default request queuefrom "${tab}" tab for FB group (ID "${groupId}")`); // prettier-ignore
 
           if (outputMaxEntries != null && itemsCount > outputMaxEntries) stopFn();
         },
