@@ -429,7 +429,7 @@ const waitAfterInfiniteScroll = async (el: unknown, { page }: { page: Page }) =>
 };
 
 const scrollIntoView = (handle: JSHandle<Element | null>, scrollBackOffset = 200) => {
-  handle.evaluate(
+  return handle.evaluate(
     (el, { offsetY }) => {
       if (!el) return;
       // Scroll into view
