@@ -425,6 +425,30 @@ const searchFbPayloads = async (
 const waitAfterInfiniteScroll = async (el: unknown, { page }: { page: Page }) => {
   await page.waitForLoadState('networkidle');
   await wait(2000);
+  await page.waitForLoadState('networkidle');
+};
+
+const scrollIntoView = (handle: JSHandle<Element | null>, scrollBackOffset = 200) => {
+  handle.evaluate(
+    (el, { offsetY }) => {
+      if (!el) return;
+      // Scroll into view
+      el?.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
+
+      // Then scroll a bit up again
+      return new Promise<void>((res) => {
+        setTimeout(() => {
+          window.scrollTo({
+            left: window.scrollX,
+            top: window.scrollY - offsetY,
+            behavior: 'smooth',
+          });
+          res();
+        }, 500);
+      });
+    },
+    { offsetY: scrollBackOffset }
+  );
 };
 
 export const routes = [
@@ -619,7 +643,7 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
 
           if (outputMaxEntries != null && itemsCount > outputMaxEntries) stopFn();
         },
-        { waitAfterScroll: waitAfterInfiniteScroll }
+        { waitAfterScroll: waitAfterInfiniteScroll, scrollIntoView: (el) => scrollIntoView(el) }
       );
       ctx.log.info(`Finished infinite scroll in "${tab}" tab for FB group (ID "${groupId}")`); // prettier-ignore
     },
@@ -1225,7 +1249,7 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
 
           if (outputMaxEntries != null && itemsCount > outputMaxEntries) stopFn();
         },
-        { waitAfterScroll: waitAfterInfiniteScroll }
+        { waitAfterScroll: waitAfterInfiniteScroll, scrollIntoView: (el) => scrollIntoView(el) }
       );
       ctx.log.info(`Finished infinite scroll for FB album (ID "${albumId}")`); // prettier-ignore
 
