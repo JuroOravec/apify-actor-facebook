@@ -48,3 +48,8 @@ export const getImageMetaFromUrl = async (url: string) => {
 
   return imgMeta;
 };
+
+export const makeImageMeta = async <T extends object>(url?: string | null, extraProps?: T) => {
+  const imageMetadata = url ? await getImageMetaFromUrl(url) : imageMeta();
+  return { ...(extraProps as T), ...imageMetadata };
+};

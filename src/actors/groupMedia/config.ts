@@ -63,6 +63,7 @@ const customActorInput = {
 // Customize the default options
 
 // Not applicable to Playwright
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 const { ignoreSslErrors, ...crawlerInput } = _crawlerInput;
 
 crawlerInput.requestHandlerTimeoutSecs.prefill = 60 * 60 * 24; // 24 HR

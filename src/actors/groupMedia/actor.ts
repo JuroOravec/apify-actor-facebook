@@ -1,11 +1,12 @@
 import type { PlaywrightCrawlerOptions, PlaywrightCrawlingContext } from 'crawlee';
 import { createAndRunApifyActor, logLevelHandlerWrapper } from 'apify-actor-utils';
 
-import { closePopupsRouterWrapper, createHandlers, routes } from './router';
+import { createHandlers, routes } from './router';
 import { validateInput } from './validation';
 import { getPackageJsonInfo } from '../../utils/package';
 import type { FbGroupMediaRouteLabel } from './types';
 import type { FbGroupMediaActorInput } from './config';
+import { closePopupsRouterWrapper } from './pageActions/general';
 
 /** Crawler options that **may** be overriden by user input */
 const crawlerConfigDefaults: PlaywrightCrawlerOptions = {
