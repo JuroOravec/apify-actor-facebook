@@ -424,7 +424,7 @@ const searchFbPayloads = async (
 
 const waitAfterInfiniteScroll = async (el: unknown, { page }: { page: Page }) => {
   await page.waitForLoadState('networkidle');
-  await wait(2000);
+  await wait(1000);
   await page.waitForLoadState('networkidle');
 };
 

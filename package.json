@@ -76,7 +76,7 @@
     "actor-spec": "^0.4.1",
     "apify": "^3.1.4",
     "apify-actor-config": "^1.0.3",
-    "apify-actor-utils": "^0.19.7",
+    "apify-actor-utils": "^0.19.8",
     "apify-client": "^2.7.1",
     "cheerio": "^1.0.0-rc.12",
     "commander": "^11.0.0",
