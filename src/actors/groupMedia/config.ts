@@ -22,6 +22,8 @@ import {
   metamorphInput,
   PerfActorInput,
   perfInput,
+  InputActorInput,
+  inputInput,
 } from 'apify-actor-utils';
 
 import actorSpec from './actorspec';
@@ -38,6 +40,7 @@ export type FbGroupMediaCustomActorInput = {
 export interface FbGroupMediaActorInput
   // Include the common fields in input
   extends Omit<CrawlerConfigActorInput, 'ignoreSslErrors'>,
+    InputActorInput,
     StartUrlsActorInput,
     LoggingActorInput,
     ProxyActorInput,
@@ -82,6 +85,7 @@ const inputSchema = createActorInputSchema<
   properties: {
     ...customActorInput,
     // Include the common fields in input
+    ...inputInput,
     ...startUrlsInput,
     ...proxyInput,
     ...privacyInput,

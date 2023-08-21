@@ -8,11 +8,13 @@ import {
   proxyInputValidationFields,
   startUrlsInputValidationFields,
   perfInputValidationFields,
+  inputInputValidationFields,
 } from 'apify-actor-utils';
 
 import type { FbGroupMediaActorInput } from './config';
 
 const inputValidationSchema = Joi.object<FbGroupMediaActorInput>({
+  ...inputInputValidationFields,
   ...crawlerInputValidationFields,
   ...startUrlsInputValidationFields,
   ...proxyInputValidationFields,

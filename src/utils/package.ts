@@ -22,5 +22,3 @@ export const getPackageJsonInfo = <TFields extends string = string>(
   pkginfo(obj as NodeModule, { include: fields });
   return obj.exports as Record<TFields, any>;
 };
-
-module.filename;
