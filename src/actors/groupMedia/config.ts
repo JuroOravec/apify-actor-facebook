@@ -24,6 +24,8 @@ import {
   perfInput,
   InputActorInput,
   inputInput,
+  RequestActorInput,
+  requestInput,
 } from 'apify-actor-utils';
 
 import actorSpec from './actorspec';
@@ -45,6 +47,7 @@ export interface FbGroupMediaActorInput
     LoggingActorInput,
     ProxyActorInput,
     PrivacyActorInput,
+    RequestActorInput,
     OutputActorInput,
     MetamorphActorInput,
     PerfActorInput,
@@ -89,6 +92,7 @@ const inputSchema = createActorInputSchema<
     ...startUrlsInput,
     ...proxyInput,
     ...privacyInput,
+    ...requestInput,
     ...outputInput,
     ...crawlerInput,
     ...perfInput,
