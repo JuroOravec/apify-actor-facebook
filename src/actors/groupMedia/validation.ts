@@ -1,30 +1,10 @@
 import Joi from 'joi';
-import {
-  crawlerInputValidationFields,
-  loggingInputValidationFields,
-  metamorphInputValidationFields,
-  outputInputValidationFields,
-  privacyInputValidationFields,
-  proxyInputValidationFields,
-  startUrlsInputValidationFields,
-  perfInputValidationFields,
-  inputInputValidationFields,
-  requestInputValidationFields,
-} from 'apify-actor-utils';
+import { allActorInputValidationFields } from 'crawlee-one';
 
 import type { FbGroupMediaActorInput } from './config';
 
 const inputValidationSchema = Joi.object<FbGroupMediaActorInput>({
-  ...inputInputValidationFields,
-  ...crawlerInputValidationFields,
-  ...startUrlsInputValidationFields,
-  ...proxyInputValidationFields,
-  ...loggingInputValidationFields,
-  ...privacyInputValidationFields,
-  ...requestInputValidationFields,
-  ...outputInputValidationFields,
-  ...metamorphInputValidationFields,
-  ...perfInputValidationFields,
+  ...allActorInputValidationFields,
 } satisfies Record<keyof FbGroupMediaActorInput, Joi.Schema>);
 
 export const validateInput = (input: FbGroupMediaActorInput | null) => {

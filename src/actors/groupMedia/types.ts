@@ -1,5 +1,5 @@
 import { fromPairs } from 'lodash';
-import type { ActorRouterContext } from 'apify-actor-utils/dist/cjs';
+import type { CrawleeOneActorRouterCtx } from 'crawlee-one';
 import type { PlaywrightCrawlingContext } from 'crawlee';
 
 import type { ArrVal } from '../../utils/types';
@@ -21,7 +21,7 @@ export const FB_GROUP_MEDIA_ROUTE_LABELS = [
 export const FB_GROUP_MEDIA_ROUTE_LABEL_ENUM = enumFromArray(FB_GROUP_MEDIA_ROUTE_LABELS);
 export type FbGroupMediaRouteLabel = ArrVal<typeof FB_GROUP_MEDIA_ROUTE_LABELS>;
 
-export type FbGroupMediaRouterContext = ActorRouterContext<
+export type FbGroupMediaRouterContext = CrawleeOneActorRouterCtx<
   PlaywrightCrawlingContext<Record<string, any>>,
   FbGroupMediaRouteLabel,
   FbGroupMediaActorInput

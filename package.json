@@ -76,11 +76,11 @@
     "actor-spec": "^0.4.1",
     "apify": "^3.1.4",
     "apify-actor-config": "^1.0.3",
-    "apify-actor-utils": "^0.22.1",
     "apify-client": "^2.7.1",
     "cheerio": "^1.0.0-rc.12",
     "commander": "^11.0.0",
     "crawlee": "^3.3.1",
+    "crawlee-one": "^1.1.2",
     "date-fns": "^2.30.0",
     "got": "^12.6.0",
     "jimp": "^0.22.10",
@@ -88,6 +88,7 @@
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.6",
     "pkginfo": "^0.4.1",
-    "playwright": "^1.37.0"
+    "playwright": "^1.37.0",
+    "portadom": "^1.0.4"
   }
 }

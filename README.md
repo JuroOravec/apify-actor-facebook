@@ -7,7 +7,7 @@ Apify Actors that scrape Facebook.
 For more info see:
 
 - <https://apify.com/jurooravec/facebook-group-media-scraper>
-- <https://github.com/JuroOravec/apify-actor-utils>
+- <https://github.com/JuroOravec/crawlee-one>
 - <https://docs.apify.com/platform/actors/development>
 
 ## Checklist

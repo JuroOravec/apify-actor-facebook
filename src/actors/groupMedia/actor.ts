@@ -1,5 +1,5 @@
-import type { PlaywrightCrawlerOptions, PlaywrightCrawlingContext } from 'crawlee';
-import { createAndRunApifyActor, logLevelHandlerWrapper } from 'apify-actor-utils';
+import type { PlaywrightCrawlerOptions } from 'crawlee';
+import { runCrawleeOne, logLevelHandlerWrapper } from 'crawlee-one';
 
 import { createHandlers, routes } from './router';
 import { validateInput } from './validation';
@@ -31,19 +31,14 @@ const crawlerConfigDefaults: PlaywrightCrawlerOptions = {
 export const run = async (crawlerConfigOverrides?: PlaywrightCrawlerOptions): Promise<void> => {
   const pkgJson = getPackageJsonInfo(module, ['name']);
 
-  await createAndRunApifyActor<
-    'playwright',
-    PlaywrightCrawlingContext<Record<string, any>>,
-    FbGroupMediaRouteLabel,
-    FbGroupMediaActorInput
-  >({
+  await runCrawleeOne<'playwright', FbGroupMediaRouteLabel, FbGroupMediaActorInput>({
     actorType: 'playwright',
     actorName: pkgJson.name,
     actorConfig: {
       validateInput,
       routes,
       routeHandlers: ({ input }) => createHandlers(input),
-      routerWrappers: ({ input }) => [
+      routeHandlerWrappers: ({ input }) => [
         logLevelHandlerWrapper(input?.logLevel ?? 'info'),
         closePopupsRouterWrapper,
       ],
@@ -51,7 +46,7 @@ export const run = async (crawlerConfigOverrides?: PlaywrightCrawlerOptions): Pr
     crawlerConfigDefaults,
     crawlerConfigOverrides,
     onActorReady: async (actor) => {
-      await actor.runCrawler(actor.startUrls);
+      await actor.runCrawler();
     },
   }).catch((err) => {
     console.log(err);

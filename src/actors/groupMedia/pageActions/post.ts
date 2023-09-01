@@ -1,13 +1,13 @@
-import { playwrightLocatorDOMLib, type DOMLib } from 'apify-actor-utils';
+import { playwrightLocatorPortadom, type Portadom } from 'portadom';
 import { parse as parseDate, format as formatDate } from 'date-fns';
 import type { Page } from 'playwright';
 import type { Log } from 'crawlee';
 
-import { serialAsyncFind, serialAsyncMap } from '../../../utils/async';
+import { serialAsyncMap } from '../../../utils/async';
+import { imageMeta, makeImageMeta } from '../../../utils/image';
 import { URL_REGEX } from '../constants';
 import type { FbAlbumPostEntry, FbPhotoPostEntry, FbVideoPostEntry, PostStats } from '../types';
 import { generalPageActions } from './general';
-import { imageMeta, makeImageMeta } from '../../../utils/image';
 
 ///////////////////////
 // PAGE ACIONS
@@ -19,7 +19,7 @@ export const postPageActions = {
 
     // 1. Hover over the date of posting to reveal a tooltip with more detailed timestamp
     logger?.debug('001: Finding timestamp element.');
-    const dom = playwrightLocatorDOMLib(page.locator('body'), page);
+    const dom = playwrightLocatorPortadom(page.locator('body'), page);
     const timestampLoc = await postDOMActions.getPostTimestampEl(dom);
     if (!timestampLoc?.node) {
       logger?.debug('Failed to find the timestamp element.');
@@ -33,8 +33,9 @@ export const postPageActions = {
     logger?.debug('003: Waiting for tooltip with detailed timestamp.');
     const tooltipLoc = page.locator('[role="tooltip"]');
     await tooltipLoc.waitFor();
+    const tooltipDom = playwrightLocatorPortadom(tooltipLoc, page);
     // We get something like "Monday, June 24, 2013 at 5:20 PM"
-    const fbTimestamp = (await tooltipLoc.textContent())?.trim() ?? null;
+    const fbTimestamp = await tooltipDom.text();
     return fbTimestamp;
   },
 
@@ -299,14 +300,15 @@ export const postPageActions = {
 ///////////////////////
 
 export const postDOMActions = {
-  getPostTimestampEl: async <T extends unknown>(dom: DOMLib<T, any>) => {
-    const ariaEls = await dom.findMany('[aria-label]'); // Matches about 20 els
-    const timestampEl = await serialAsyncFind(ariaEls, async (el) => {
-      const text = await el.text();
-      // Match text like "June 24, 2013"
-      return text?.match(URL_REGEX.TIMESTAMP_DATE);
-    });
-    return timestampEl ?? null;
+  getPostTimestampEl: async <T extends unknown>(dom: Portadom<T, any>) => {
+    const timestampEl = await dom
+      .findMany('[aria-label]') // Matches about 20 els
+      .findAsyncSerial(async (el) => {
+        const text = await el.text();
+        // Match text like "June 24, 2013"
+        return text?.match(URL_REGEX.TIMESTAMP_DATE);
+      }).promise;
+    return timestampEl;
   },
 
   /**
@@ -317,19 +319,28 @@ export const postDOMActions = {
    *          - https://www.facebook.com/photo/?fbid=1384528728428950&set=g.185350018231892
    * - Videos - https://www.facebook.com/milo.barnett/videos/10205524050998264/?idorvanity=185350018231892
    */
-  getPostStats: async <T extends unknown>(dom: DOMLib<T, any>) => {
+  getPostStats: async <T extends unknown>(dom: Portadom<T, any>) => {
     // 1. Find container with post stats
-    const likesEl = await dom.findOne('[aria-label*="Like:"]');
-    const commentElCandidates = await dom.findMany('[role="button"] [dir="auto"]');
-    const commentsEl = await serialAsyncFind(commentElCandidates, async (domEl) => {
-      const text = await domEl.text();
-      return text?.match(URL_REGEX.COMMENT_COUNT);
-    });
+    const likesEl = await dom.findOne('[aria-label*="Like:"]').promise;
+    const commentsEl = await dom
+      .findMany('[role="button"] [dir="auto"]')
+      .findAsyncSerial(async (el) => {
+        const text = await el.text();
+        return text?.match(URL_REGEX.COMMENT_COUNT);
+      }).promise;
 
-    let statsContainerEl: DOMLib<T, unknown> | null = null;
-    if (likesEl?.node && commentsEl?.node) {
-      statsContainerEl = await likesEl.getCommonAncestor(commentsEl.node);
-    }
+    const statsContainerEl =
+      likesEl?.node && commentsEl?.node
+        ? await likesEl.getCommonAncestor(commentsEl.node).promise
+        : null;
+    // "6.9K views"
+    const viewsText = await statsContainerEl
+      ?.children()
+      .findAsyncSerial(async (domEl) => {
+        const text = await domEl.text();
+        return text?.match(/views/i);
+      })
+      .textAsLower();
 
     // 2. Extract likes
     let likesCount: number | null = null;
@@ -356,22 +367,22 @@ export const postDOMActions = {
     // 4. Extract views
     let viewsCount: number | null = null;
     if (statsContainerEl) {
-      const statEls = await statsContainerEl.children();
-      const viewsEl = await serialAsyncFind(statEls, async (domEl) => {
-        const text = await domEl.text();
-        return text?.match(/views/i);
-      });
-      if (viewsEl) {
-        // "6.9K views"
-        const viewsText = await viewsEl.textAsLower();
-        const regexRes = viewsText?.match(URL_REGEX.VIEW_COUNT);
-        const { groups: { views, viewsUnit } } = regexRes || { groups: {} as any }; // prettier-ignore
-        // Convert "6.9K" to `6900`
-        const viewsNum = views ? Number.parseFloat(views.replace(/[,\s]+/g, '')) : 0;
-        const viewsUnitMultiples = { k: 1000, m: 10 ** 6, b: 10 ** 9, t: 10 ** 12 };
-        const viewsMulti = (viewsUnitMultiples as any)[viewsUnit] || 1;
-        viewsCount = viewsNum * viewsMulti;
-      }
+      // "6.9K views"
+      const viewsText = await statsContainerEl
+        .children()
+        .findAsyncSerial(async (domEl) => {
+          const text = await domEl.text();
+          return text?.match(/views/i);
+        })
+        .textAsLower();
+
+      const regexRes = viewsText?.match(URL_REGEX.VIEW_COUNT);
+      const { groups: { views, viewsUnit } } = regexRes || { groups: {} as any }; // prettier-ignore
+      // Convert "6.9K" to `6900`
+      const viewsNum = views ? Number.parseFloat(views.replace(/[,\s]+/g, '')) : 0;
+      const viewsUnitMultiples = { k: 1000, m: 10 ** 6, b: 10 ** 9, t: 10 ** 12 };
+      const viewsMulti = (viewsUnitMultiples as any)[viewsUnit] || 1;
+      viewsCount = viewsNum * viewsMulti;
     }
 
     return {
@@ -393,8 +404,8 @@ export const postDOMActions = {
    *          - https://www.facebook.com/media/set/?set=oa.187284474705113
    */
   getAuthoredPostMetadata: async <T extends unknown>(
-    timestampEl: DOMLib<T, any> | null,
-    endEl: DOMLib<T, any> | null,
+    timestampEl: Portadom<T, any> | null,
+    endEl: Portadom<T, any> | null,
     prentLog?: Log
   ) => {
     const logger = prentLog?.child({ prefix: 'AuthoredPostMetadata_' });
@@ -404,13 +415,14 @@ export const postDOMActions = {
     //    from the outside.
     logger?.debug('001: Finding metadata container');
     const metadataContainerEl =
-      endEl?.node && timestampEl?.node ? await timestampEl.getCommonAncestor(endEl.node) : null;
+      endEl?.node && timestampEl?.node
+        ? await timestampEl.getCommonAncestor(endEl.node).promise
+        : null;
 
     // 2. Get author info
     logger?.debug('002: Finding elements within metadata container');
-    const authorContainerEl = (await metadataContainerEl?.children())?.[0];
-    const authorProfileImgThumbEl = (await authorContainerEl?.findOne('image')) ?? null;
-    const authorProfileLinkEl = (await authorProfileImgThumbEl?.closest('a')) ?? null;
+    const authorProfileImgThumbEl = metadataContainerEl?.children().at(0).findOne('image');
+    const authorProfileLinkEl = authorProfileImgThumbEl?.closest('a');
 
     logger?.debug('003: Extracting metadata info');
     const authorProfileImageThumbUrl = (await authorProfileImgThumbEl?.attr('href')) ?? null;
@@ -428,7 +440,7 @@ export const postDOMActions = {
     //       it from the joint text.
     logger?.debug('004: Extracting post description');
     const metadataText = (await metadataContainerEl?.text()) ?? null;
-    const metadataPlusDescText = (await (await metadataContainerEl?.parent())?.text()) ?? null;
+    const metadataPlusDescText = (await metadataContainerEl?.parent().text()) ?? null;
     const description =
       metadataPlusDescText && metadataText
         ? metadataPlusDescText?.split(metadataText)[1].trim() ?? null
@@ -453,10 +465,10 @@ export const postDOMActions = {
    * - Albums - https://www.facebook.com/media/set/?set=oa.186299054803655&type=3
    *          - https://www.facebook.com/media/set/?set=oa.187284474705113
    */
-  getAlbumPostMetadata: async <T extends unknown>(dom: DOMLib<T, any>) => {
+  getAlbumPostMetadata: async <T extends unknown>(dom: Portadom<T, any>) => {
     // 1. Find container with post metadata
     const timestampEl = await postDOMActions.getPostTimestampEl(dom);
-    const albumsLinkEl = await dom.findOne('[href*="/media/albums"][role="link"]');
+    const albumsLinkEl = await dom.findOne('[href*="/media/albums"][role="link"]').promise;
 
     const metadataContainerEl =
       albumsLinkEl?.node && timestampEl?.node

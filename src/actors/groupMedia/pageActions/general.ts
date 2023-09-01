@@ -1,4 +1,4 @@
-import type { CrawlerRouterWrapper } from 'apify-actor-utils';
+import type { CrawleeOneRouteWrapper } from 'crawlee-one';
 import type { JSHandle, Page } from 'playwright';
 import type { PlaywrightCrawlingContext } from 'crawlee';
 
@@ -100,7 +100,7 @@ export const generalPageActions = {
   },
 };
 
-export const closePopupsRouterWrapper: CrawlerRouterWrapper<
+export const closePopupsRouterWrapper: CrawleeOneRouteWrapper<
   PlaywrightCrawlingContext<any>,
   FbGroupMediaRouterContext
 > = (origRouterHandler) => {

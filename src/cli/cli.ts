@@ -79,7 +79,7 @@ program
 program
   .command('migrate')
   .description(
-    'Run the "apify-actor-utils migrate" command for specified actor(s). The "dir" argument is supplied for you.'
+    'Run the "crawlee-one migrate" command for specified actor(s). The "dir" argument is supplied for you.'
   )
   .argument('<actor-name>', 'Actor name (same as folder name). Use "*" to select all actors.')
   .addHelpText('after', genExampleCall('migrate actorName -t v1'))
@@ -89,7 +89,7 @@ program
 
     for (const actor of actorNames) {
       const dir = `${ACTOR_DIST_DIR}/${actor}/migrations/migrations`;
-      const cmd = `npx apify-actor-utils migrate --dir ${dir} ${otherArgs.join(' ')}`;
+      const cmd = `npx crawlee-one migrate --dir ${dir} ${otherArgs.join(' ')}`;
       console.log(cmd);
       await execAsync(cmd);
     }
@@ -98,7 +98,7 @@ program
 program
   .command('unmigrate')
   .description(
-    'Run the "apify-actor-utils unmigrate" command for specified actor(s). The "dir" argument is supplied for you.'
+    'Run the "crawlee-one unmigrate" command for specified actor(s). The "dir" argument is supplied for you.'
   )
   .argument('<actor-name>', 'Actor name (same as folder name). Use "*" to select all actors.')
   .addHelpText('after', genExampleCall('unmigrate actorName -t v1'))
@@ -108,7 +108,7 @@ program
 
     for (const actor of actorNames) {
       const dir = path.normalize(`${ACTOR_DIST_DIR}/${actor}/migrations/migrations`);
-      const cmd = `npx apify-actor-utils unmigrate --dir ${dir} ${otherArgs.join(' ')}`;
+      const cmd = `npx crawlee-one unmigrate --dir ${dir} ${otherArgs.join(' ')}`;
       console.log(cmd);
       await execAsync(cmd);
     }

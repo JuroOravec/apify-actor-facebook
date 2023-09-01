@@ -5,28 +5,7 @@ import {
   ActorInputSchema,
   createActorOutputSchema,
 } from 'apify-actor-config';
-import {
-  CrawlerConfigActorInput,
-  LoggingActorInput,
-  OutputActorInput,
-  PrivacyActorInput,
-  ProxyActorInput,
-  StartUrlsActorInput,
-  MetamorphActorInput,
-  crawlerInput as _crawlerInput,
-  loggingInput,
-  outputInput,
-  privacyInput,
-  proxyInput,
-  startUrlsInput,
-  metamorphInput,
-  PerfActorInput,
-  perfInput,
-  InputActorInput,
-  inputInput,
-  RequestActorInput,
-  requestInput,
-} from 'apify-actor-utils';
+import { AllActorInputs, allActorInputs as _allActorInputs } from 'crawlee-one';
 
 import actorSpec from './actorspec';
 
@@ -39,19 +18,8 @@ export type FbGroupMediaCustomActorInput = {
 };
 
 /** Shape of the data passed to the actor from Apify */
-export interface FbGroupMediaActorInput
-  // Include the common fields in input
-  extends Omit<CrawlerConfigActorInput, 'ignoreSslErrors'>,
-    InputActorInput,
-    StartUrlsActorInput,
-    LoggingActorInput,
-    ProxyActorInput,
-    PrivacyActorInput,
-    RequestActorInput,
-    OutputActorInput,
-    MetamorphActorInput,
-    PerfActorInput,
-    FbGroupMediaCustomActorInput {}
+export type FbGroupMediaActorInput = FbGroupMediaCustomActorInput &
+  Omit<AllActorInputs, 'ignoreSslErrors'>;
 
 const customActorInput = {
   /** No custom fields currently */
@@ -68,15 +36,15 @@ const customActorInput = {
 
 // Customize the default options
 
-// Not applicable to Playwright
+// 'ignoreSslErrors' is not applicable to Playwright
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-const { ignoreSslErrors, ...crawlerInput } = _crawlerInput;
+const { ignoreSslErrors, ...allActorInputs } = _allActorInputs;
 
-crawlerInput.requestHandlerTimeoutSecs.prefill = 60 * 60 * 24; // 24 HR
-crawlerInput.maxRequestRetries.default = 5;
-crawlerInput.maxRequestRetries.prefill = 5;
-crawlerInput.maxConcurrency.default = 5;
-crawlerInput.maxConcurrency.prefill = 5;
+allActorInputs.requestHandlerTimeoutSecs.prefill = 60 * 60 * 24; // 24 HR
+allActorInputs.maxRequestRetries.default = 5;
+allActorInputs.maxRequestRetries.prefill = 5;
+allActorInputs.maxConcurrency.default = 5;
+allActorInputs.maxConcurrency.prefill = 5;
 
 const inputSchema = createActorInputSchema<
   ActorInputSchema<Record<keyof FbGroupMediaActorInput, Field>>
@@ -88,16 +56,7 @@ const inputSchema = createActorInputSchema<
   properties: {
     ...customActorInput,
     // Include the common fields in input
-    ...inputInput,
-    ...startUrlsInput,
-    ...proxyInput,
-    ...privacyInput,
-    ...requestInput,
-    ...outputInput,
-    ...crawlerInput,
-    ...perfInput,
-    ...loggingInput,
-    ...metamorphInput,
+    ...allActorInputs,
   },
 });
 

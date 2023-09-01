@@ -1,12 +1,6 @@
 import type { PlaywrightCrawlingContext } from 'crawlee';
-import {
-  type RouteHandler,
-  type RouteMatcher,
-  type DOMLib,
-  cheerioDOMLib,
-  playwrightHandleDOMLib,
-  playwrightPageLib,
-} from 'apify-actor-utils';
+import type { CrawleeOneRouteHandler, CrawleeOneRoute } from 'crawlee-one';
+import { cheerioPortadom, playwrightHandlePortadom, playwrightPortapage, Portadom } from 'portadom';
 import { Actor } from 'apify';
 import type { ElementHandle, JSHandle, Page } from 'playwright';
 
@@ -27,8 +21,8 @@ import { postDOMActions, postPageActions, postPageMethods } from './pageActions/
 
 const makeCheerioDom = async (ctx: PlaywrightCrawlingContext, url: string | null) => {
   const cheerioDom = await ctx.parseWithCheerio();
-  const domLib = cheerioDOMLib(cheerioDom.root(), url);
-  return domLib;
+  const dom = cheerioPortadom(cheerioDom.root(), url);
+  return dom;
 };
 
 const waitAfterInfiniteScroll = async (el: unknown, { page }: { page: Page }) => {
@@ -121,7 +115,7 @@ export const routes = [
       return !!urlObj.pathname.match(URL_REGEX.FB_VIDEO_URL);
     },
   },
-] satisfies RouteMatcher<PlaywrightCrawlingContext<any>, {}, FbGroupMediaRouteLabel>[];
+] satisfies CrawleeOneRoute<FbGroupMediaRouteLabel, {}, PlaywrightCrawlingContext<any>>[];
 
 const mediaTypeConfig = {
   photos: {
@@ -215,9 +209,9 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       // E.g. there is something INSIDE children that we can select, and that's how we know.
       ctx.log.debug(`Looking for infinite scroll container in "${tab}" tab for FB group (ID "${groupId}")`); // prettier-ignore
       const bodyHandle = await ctx.page.evaluateHandle(() => document.body);
-      const domLib = playwrightHandleDOMLib(bodyHandle, ctx.page);
-      const pageLib = await playwrightPageLib(ctx.page);
-      const containerElHandle = await domLib.getCommonAncestorFromSelector(linkSelector);
+      const dom = playwrightHandlePortadom(bodyHandle, ctx.page);
+      const pwPage = await playwrightPortapage(ctx.page);
+      const containerElHandle = await dom.getCommonAncestorFromSelector(linkSelector).promise;
 
       if (!containerElHandle?.node) {
         ctx.log.error(`Failed to find infinite scroll container in "${tab}" tab with for FB group (ID "${groupId}")`); // prettier-ignore
@@ -228,7 +222,7 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       ctx.log.info(`Starting infinite scroll in "${tab}" tab for FB group (ID "${groupId}")`); // prettier-ignore
 
       let itemsCount = 0;
-      await pageLib.infiniteScroll(
+      await pwPage.infiniteScroll(
         containerElHandle.node,
         async (newElsHandle, _, stopFn) => {
           // 4. Get links from new entries
@@ -295,10 +289,12 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       };
 
       // DOM Action
-      const getPhotoPreview = async <T extends unknown>(dom: DOMLib<T, any>) => {
+      const getPhotoPreview = async <T extends unknown>(dom: Portadom<T, any>) => {
         // Find preview photo
-        const imgEl = await dom.findOne('[data-pagelet="MediaViewerPhoto"] img');
-        const [url, alt] = (await imgEl?.props<(string | null)[]>(['src', 'alt'])) ?? [null, null];
+        const [url = null, alt = null] =
+          (await dom
+            .findOne('[data-pagelet="MediaViewerPhoto"] img')
+            .props<(string | null)[]>(['src', 'alt'])) ?? [];
         return { url, alt };
       };
 
@@ -313,8 +309,8 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       // 3. Get preview photo URL
       logger.debug(`004: Extracting preview image`);
       if (!photoData.imagePreview.url || !photoData.imagePreview.alt) {
-        const domLib = await makeCheerioDom(ctx, pageUrl);
-        const { url, alt } = await getPhotoPreview(domLib);
+        const dom = await makeCheerioDom(ctx, pageUrl);
+        const { url, alt } = await getPhotoPreview(dom);
         if (url) photoData.imagePreview.url = url;
         if (alt) photoData.imagePreview.alt = alt;
       }
@@ -332,8 +328,8 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       logger.debug(`007: Extracting post stats`);
       // prettier-ignore
       if ([photoData.commentsCount, photoData.likesCount, photoData.commentsCount].some((d) => d == null)) {
-        const domLib = await makeCheerioDom(ctx, pageUrl);
-        const { likesCount, commentsCount, viewsCount } = await postDOMActions.getPostStats(domLib);
+        const dom = await makeCheerioDom(ctx, pageUrl);
+        const { likesCount, commentsCount, viewsCount } = await postDOMActions.getPostStats(dom);
         if (likesCount != null) photoData.likesCount = likesCount;
         if (commentsCount != null) photoData.commentsCount = commentsCount;
         if (viewsCount != null) photoData.viewsCount = viewsCount;
@@ -341,11 +337,12 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
 
       // 6. Get authorName, authorProfileUrl, authorProfileImgUrl, post text
       logger.debug(`008: Finding post metadata element`);
-      const domLib = await makeCheerioDom(ctx, pageUrl);
-      const burgerMenuEl = await domLib.findOne('[aria-haspopup="menu"][role="button"]');
-      const timestampEl = await postDOMActions.getPostTimestampEl(domLib);
+      const dom = await makeCheerioDom(ctx, pageUrl);
+      const burgerMenuEl = await dom.findOne('[aria-haspopup="menu"][role="button"]').promise;
+      const timestampEl = await postDOMActions.getPostTimestampEl(dom);
       logger.debug(`009: Extracting post metadata`);
-      const { authorProfileImageThumbUrl, description, ...postMetadata } = await postDOMActions.getAuthoredPostMetadata(timestampEl, burgerMenuEl, logger); // prettier-ignore
+      const { authorProfileImageThumbUrl, description, ...postMetadata } =
+        await postDOMActions.getAuthoredPostMetadata(timestampEl, burgerMenuEl, logger);
       if (!photoData.authorName) photoData.authorName = postMetadata.authorName;
       if (!photoData.authorProfileUrl) photoData.authorProfileUrl = postMetadata.authorProfileUrl;
 
@@ -389,15 +386,16 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       await ctx.page.waitForLoadState('networkidle');
       const logger = ctx.log.child({ prefix: 'fb_photo_' });
       const url = ctx.page.url();
-      let domLib = await makeCheerioDom(ctx, url);
+      let dom = await makeCheerioDom(ctx, url);
 
       // DOM Action
-      const getVideoPostVideo = async <T extends unknown>(dom: DOMLib<T, any>) => {
+      const getVideoPostVideo = async <T extends unknown>(dom: Portadom<T, any>) => {
         // Find video
-        const videoEl = await dom.findOne('[data-pagelet="WatchPermalinkVideo"] video');
-        const props = await videoEl?.props<MaybeArrayItems<[string, number, number, number]>>(
-          ['src', 'duration', 'videoHeight', 'videoWidth']
-        ); // prettier-ignore
+        const props = await dom
+          .findOne('[data-pagelet="WatchPermalinkVideo"] video')
+          .props<MaybeArrayItems<[string, number, number, number]>>(
+            ['src', 'duration', 'videoHeight', 'videoWidth'] // prettier-ignore
+          );
         const [videoUrl = null, videoDuration = null, videoHeight = null, videoWidth = null] = props ?? []; // prettier-ignore
 
         return {
@@ -410,10 +408,12 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       };
 
       // DOM Action
-      const getVideoThumb = async <T extends unknown>(dom: DOMLib<T, any>) => {
+      const getVideoThumb = async <T extends unknown>(dom: Portadom<T, any>) => {
         // Find preview photo
-        const imgEl = await dom.findOne('[data-pagelet="WatchPermalinkVideo"] img');
-        const [url, alt] = (await imgEl?.props<(string | null)[]>(['src', 'alt'])) ?? [null, null];
+        const [url = null, alt = null] =
+          (await dom
+            .findOne('[data-pagelet="WatchPermalinkVideo"] img')
+            .props<(string | null)[]>(['src', 'alt'])) ?? [];
         return { url, alt };
       };
 
@@ -437,7 +437,7 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       // 3. Get video URL
       logger.debug(`003: Extracting video URL`);
       if ([videoData.videoUrl, videoData.videoDuration, videoData.videoHeight, videoData.videoWidth].some((d) => d == null)) {
-        const { videoUrl, videoDuration, videoHeight, videoWidth } = await getVideoPostVideo(domLib);
+        const { videoUrl, videoDuration, videoHeight, videoWidth } = await getVideoPostVideo(dom);
         if (videoData.videoUrl == null) videoData.videoUrl = videoUrl;
         if (videoData.videoDuration == null) videoData.videoDuration = videoDuration;
         if (videoData.videoHeight == null) videoData.videoHeight = videoHeight;
@@ -447,7 +447,7 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       // 4. Get video thumb photo
       logger.debug(`004: Extracting video preview image`);
       if ([videoData.videoThumbImage.url, videoData.videoThumbImage.alt].some((d) => d == null)) {
-        const videoThumb = await getVideoThumb(domLib);
+        const videoThumb = await getVideoThumb(dom);
         if (videoData.videoThumbImage.url == null) videoData.videoThumbImage.url = videoThumb.url;
         if (videoData.videoThumbImage.alt == null) videoData.videoThumbImage.alt = videoThumb.alt;
       } // prettier-ignore
@@ -464,8 +464,8 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       // 6. Get likes, comments, (and views for videos) counts
       logger.debug(`006: Extracting post stats`);
       if ([videoData.videoUrl, videoData.videoDuration, videoData.videoHeight, videoData.videoWidth].some((d) => d == null)) {
-        domLib = await makeCheerioDom(ctx, url);
-        const { likesCount, commentsCount, sharesCount, viewsCount } = await postDOMActions.getPostStats(domLib);
+        dom = await makeCheerioDom(ctx, url);
+        const { likesCount, commentsCount, sharesCount, viewsCount } = await postDOMActions.getPostStats(dom);
         if (videoData.likesCount == null) videoData.likesCount = likesCount;
         if (videoData.commentsCount == null) videoData.commentsCount = commentsCount;
         if (videoData.sharesCount == null) videoData.sharesCount = sharesCount;
@@ -474,10 +474,12 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
 
       // 7. Get authorName, authorProfileUrl, authorProfileImgUrl, post text
       logger.debug(`007: Finding post metadata element`);
-      const menuEl = (await domLib.findMany('[aria-label="More"][role="button"]')).slice(-1)[0];
-      const timestampEl = await postDOMActions.getPostTimestampEl(domLib);
+      const menuEl = await dom.findMany('[aria-label="More"][role="button"]').slice(-1).at(0)
+        .promise;
+      const timestampEl = await postDOMActions.getPostTimestampEl(dom);
       logger.debug(`008: Extracting post metadata`);
-      const { authorProfileImageThumbUrl, description, ...postMetadata } = await postDOMActions.getAuthoredPostMetadata(timestampEl, menuEl, logger); // prettier-ignore
+      const { authorProfileImageThumbUrl, description, ...postMetadata } =
+        await postDOMActions.getAuthoredPostMetadata(timestampEl, menuEl, logger);
       if (!videoData.authorName) videoData.authorName = postMetadata.authorName;
       if (!videoData.authorProfileUrl) videoData.authorProfileUrl = postMetadata.authorProfileUrl;
 
@@ -563,10 +565,14 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       // 5. Get all entries in the album
       // 5.1. Find container of entries loaded via infinite scroll
       ctx.log.debug(`005: Looking for infinite scroll container for FB album (ID "${albumId}")`);
-      const pwPage = await playwrightPageLib(ctx.page);
-      const pwDom = playwrightHandleDOMLib(await ctx.page.evaluateHandle(() => document), ctx.page);
+      const pwPage = await playwrightPortapage(ctx.page);
+      const pwDom = playwrightHandlePortadom(
+        await ctx.page.evaluateHandle(() => document),
+        ctx.page
+      );
       const containerEl = await pwDom.getCommonAncestorFromSelector<ElementHandle<HTMLElement>>(
-        '[role="listitem"] [href][role="link"]'); // prettier-ignore
+        '[role="listitem"] [href][role="link"]'
+      ).promise;
 
       if (!containerEl?.node) {
         ctx.log.error(`Failed to find infinite scroll container for FB album (ID "${albumId}")`); // prettier-ignore
@@ -629,5 +635,8 @@ export const createHandlers = <Ctx extends PlaywrightCrawlingContext>(
       //   - Use https://apify.com/apify/facebook-comments-scraper/input-schema
       //     - Commenter names are NOT included
     },
-  } satisfies Record<FbGroupMediaRouteLabel, RouteHandler<Ctx, FbGroupMediaRouterContext>>;
+  } satisfies Record<
+    FbGroupMediaRouteLabel,
+    CrawleeOneRouteHandler<Ctx, FbGroupMediaRouterContext>
+  >;
 };
